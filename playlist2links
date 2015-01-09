@@ -1,0 +1,11 @@
+#!/bin/bash
+html2 a 2>/dev/null
+if [ $? -eq 127 ]
+then
+	echo "Please, install xml2 to use this script"
+	exit
+fi;
+wget "https://www.youtube.com/playlist?list=$1" -o /dev/null -O /tmp/playlist.html
+html2 < /tmp/playlist.html > /tmp/playlist.html2 2>/dev/null
+grep "/html/body/div/div/div/div/div/div/div/div/div/div/ul/li/div/table/tbody/tr/@data-video-id=" /tmp/playlist.html2 > /tmp/playlist.html3
+sed 's/\(.*\)=/https:\/\/www.youtube.com\/watch?v=/g' < /tmp/playlist.html3 > playlist.txt
