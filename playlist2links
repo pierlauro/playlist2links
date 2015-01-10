@@ -1,5 +1,12 @@
 #!/bin/bash
 
+if [[ -z "$1" ]];
+then
+	echo "Please, specify the playlist code as argument" 1>&2
+	exit 1
+fi
+url="https://www.youtube.com/playlist?list=$1"
+
 if [[ -z $(type -p html2) ]];
 then
 	echo "Please, install xml2 to use this script" 1>&2
@@ -9,11 +16,11 @@ fi
 command=""
 if [[ -n $(type -p wget) ]];
 then
-	command="wget -o /dev/null -O /tmp/playlist.html 'https://www.youtube.com/playlist?list=$1'"
+	command="wget -o /dev/null -O /tmp/playlist.html '$url'"
 fi
 if [[ -z "$command" ]] && [[ -n $(type -p curl) ]];
 then
-	command="curl -s -o /tmp/playlist.html 'https://www.youtube.com/playlist?list=$1'"
+	command="curl -s -o /tmp/playlist.html '$url'"
 fi
 if [[ -z "$command" ]];
 then
