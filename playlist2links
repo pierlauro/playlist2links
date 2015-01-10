@@ -13,14 +13,19 @@ then
 	exit 1
 fi
 
+TMPFILE=`mktemp /tmp/${tempfoo}.XXXXXX` || {
+	echo "Tempoprary file creation failuer" 1>&2
+	exit 1
+}
+
 COMMAND=""
 if [[ -n $(type -p wget) ]];
 then
-	COMMAND="wget -o /dev/null -O /tmp/playlist.html '$URL'"
+	COMMAND="wget -o /dev/null -O '${TMPFILE}.html' '$URL'"
 fi
 if [[ -z "$COMMAND" ]] && [[ -n $(type -p curl) ]];
 then
-	COMMAND="curl -s -o /tmp/playlist.html '$URL'"
+	COMMAND="curl -s -o '${TMPFILE}.html' '$URL'"
 fi
 if [[ -z "$COMMAND" ]];
 then
@@ -29,6 +34,8 @@ then
 fi
 
 eval $COMMAND
-html2 < /tmp/playlist.html > /tmp/playlist.html2 2>/dev/null
-grep "/html/body/div/div/div/div/div/div/div/div/div/div/ul/li/div/table/tbody/tr/@data-video-id=" /tmp/playlist.html2 > /tmp/playlist.html3
-sed 's/\(.*\)=/https:\/\/www.youtube.com\/watch?v=/g' < /tmp/playlist.html3 > playlist.txt
+html2 < "${TMPFILE}.html" > "${TMPFILE}.html2" 2>/dev/null
+grep "/html/body/div/div/div/div/div/div/div/div/div/div/ul/li/div/table/tbody/tr/@data-video-id=" "${TMPFILE}.html2" > "${TMPFILE}.html3"
+sed 's/\(.*\)=/https:\/\/www.youtube.com\/watch?v=/g' < "${TMPFILE}.html3" > playlist.txt
+
+rm -f "${TMPFILE}"
