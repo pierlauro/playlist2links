@@ -5,7 +5,7 @@ then
 	echo "Please, specify the playlist code as argument" 1>&2
 	exit 1
 fi
-url="https://www.youtube.com/playlist?list=$1"
+URL="https://www.youtube.com/playlist?list=$1"
 
 if [[ -z $(type -p html2) ]];
 then
@@ -13,22 +13,22 @@ then
 	exit 1
 fi
 
-command=""
+COMMAND=""
 if [[ -n $(type -p wget) ]];
 then
-	command="wget -o /dev/null -O /tmp/playlist.html '$url'"
+	COMMAND="wget -o /dev/null -O /tmp/playlist.html '$URL'"
 fi
-if [[ -z "$command" ]] && [[ -n $(type -p curl) ]];
+if [[ -z "$COMMAND" ]] && [[ -n $(type -p curl) ]];
 then
-	command="curl -s -o /tmp/playlist.html '$url'"
+	COMMAND="curl -s -o /tmp/playlist.html '$URL'"
 fi
-if [[ -z "$command" ]];
+if [[ -z "$COMMAND" ]];
 then
 	echo "Please, install wget or curl to use this script" 1>&2
 	exit 1
 fi
 
-eval $command
+eval $COMMAND
 html2 < /tmp/playlist.html > /tmp/playlist.html2 2>/dev/null
 grep "/html/body/div/div/div/div/div/div/div/div/div/div/ul/li/div/table/tbody/tr/@data-video-id=" /tmp/playlist.html2 > /tmp/playlist.html3
 sed 's/\(.*\)=/https:\/\/www.youtube.com\/watch?v=/g' < /tmp/playlist.html3 > playlist.txt
