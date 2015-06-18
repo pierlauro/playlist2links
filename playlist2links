@@ -38,4 +38,21 @@ html2 < "${TMPFILE}.html" > "${TMPFILE}.html2" 2>/dev/null
 grep "/html/body/div/div/div/div/div/div/div/div/div/div/ul/li/div/table/tbody/tr/@data-video-id=" "${TMPFILE}.html2" > "${TMPFILE}.html3"
 sed 's/\(.*\)=/https:\/\/www.youtube.com\/watch?v=/g' < "${TMPFILE}.html3" > playlist.txt
 
-rm -f "${TMPFILE}"
+while [[ $(grep "continuation=" ${TMPFILE}.html2) ]]
+do
+	sed -i 's/_continuation=1/\n/g' ${TMPFILE}.html2
+	CONTINUATION=$(sed 's/\(.*\)continuation=/https:\/\/www.youtube.com\/browse_ajax?action_continuation=1&/g' <<< $(grep "continuation=" ${TMPFILE}.html2))
+	COMMAND=""
+	if [[ -n $(type -p wget) ]];
+	then
+		wget -o /dev/null -O "${TMPFILE}.html2" "$CONTINUATION"
+	else
+		curl -s -o "${TMPFILE}.html2" "$CONTINUATION"
+	fi
+
+	tr -s '\\|/' '\n' < ${TMPFILE}.html2 > "${TMPFILE}"
+	grep "^watch" ${TMPFILE} | sed 's/\\u0026amp;\(.*\)//g' | sed 's/watch/https:\/\/www.youtube.com\/watch/g' | sort -u >> playlist.txt
+
+	mv ${TMPFILE} ${TMPFILE}.html2
+done
+rm -f ${TMPFILE}*
