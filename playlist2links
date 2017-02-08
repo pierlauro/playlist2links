@@ -33,7 +33,7 @@ grep -e "^<tr.*<a href=\"/watch?v=.*$1" "${TMPFILE}.html" | sed 's/.*watch/https
 while [[ $(grep "continuation=" ${TMPFILE}.html) ]]
 do
 	sed -i 's/_continuation=1/\n/g' ${TMPFILE}.html
-	CONTINUATION=$((sed 's/\(.*\)continuation=/https:\/\/www.youtube.com\/browse_ajax?action_continuation=1&/g' | sed 's/".*//g' | sed 's/\\u0026/\&/g' | tr -d '\' ) <<< $(grep "continuation=" ${TMPFILE}.html))
+	CONTINUATION=$((sed 's/\(.*\)continuation=/https:\/\/www.youtube.com\/browse_ajax?action_continuation=1&/g' | sed 's/".*//g' | sed 's/\\u0026/\&/g' | tr -d '\\' ) <<< $(grep "continuation=" ${TMPFILE}.html))
 	
 	if [[ -n $(type -p wget) ]];
 	then
