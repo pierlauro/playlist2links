@@ -1,13 +1,18 @@
 #!/bin/bash
 
-if [[ -z "$1" ]];
+if [ -z "$1" ];
 then
 	echo "Please, specify the playlist code as argument" 1>&2
 	exit 1
 fi
 URL="https://www.youtube.com/playlist?list=$1"
 
-TMPFILE=`mktemp /tmp/${tempfoo}.XXXXXX` || {
+withnames=false
+if [[ "$2" = "withnames" ]];
+then
+	withnames=true
+fi
+TMPFILE=$(mktemp "/tmp/$0.tmp.XXXXXX") || {
 	echo "Temporary file creation failed" 1>&2
 	exit 1
 }
@@ -17,33 +22,43 @@ if [[ -n $(type -p wget) ]];
 then
 	COMMAND="wget -o /dev/null -O '${TMPFILE}.html' '$URL'"
 fi
-if [[ -z "$COMMAND" ]] && [[ -n $(type -p curl) ]];
+if [ -z "$COMMAND" ] && [[ -n $(type -p curl) ]];
 then
 	COMMAND="curl -s -o '${TMPFILE}.html' '$URL'"
 fi
-if [[ -z "$COMMAND" ]];
+if [ -z "$COMMAND" ];
 then
 	echo "Please, install wget or curl to use this script" 1>&2
 	exit 1
 fi
 
-eval $COMMAND
-grep -e "^<tr.*<a href=\"/watch?v=.*$1" "${TMPFILE}.html" | sed 's/.*watch/https:\/\/www.youtube.com\/watch/g' | sed 's/&amp.*//g' > playlist_$1.txt
+eval "$COMMAND"
 
-while [[ $(grep "continuation=" ${TMPFILE}.html) ]]
+if $withnames;
+then
+	grep -e "^<tr.*<a href=\"/watch?v=.*$1" "${TMPFILE}.html" |sed 's/.*data-title=\"/\n/g'|sed 's/\"/\n/'|sed 's/.*watch/https:\/\/www.youtube.com\/watch/g'|sed 's/&amp.*//g' | grep -v '^$' > "playlist_$1.txt"
+else
+	grep -e "^<tr.*<a href=\"/watch?v=.*$1" "${TMPFILE}.html" | sed 's/.*watch/https:\/\/www.youtube.com\/watch/g' | sed 's/&amp.*//g' > "playlist_$1.txt"
+fi
+
+while [ "$(grep "continuation=" ${TMPFILE}.html)" ]
 do
 	sed -i 's/_continuation=1/\n/g' ${TMPFILE}.html
 	CONTINUATION='https://www.youtube.com/browse_ajax?action_continuation=1&'$(grep 'continuation=' ${TMPFILE}.html | head -n1 | cut -d ';' -f2 | cut -d '"' -f 1 | cut -d '\' -f1)
-	
+
 	if [[ -n $(type -p wget) ]];
 	then
 		wget -o /dev/null -O "${TMPFILE}.html" "$CONTINUATION"
 	else
 		curl -s -o "${TMPFILE}.html" "$CONTINUATION"
 	fi
+	if $withnames;
+	then
+		sed 's/\\n/\n/g' "${TMPFILE}.html"|grep -e "data-title=" |sed 's/.*data-title=\\"/\n/g'|sed 's/\\"/\n/'|sed 's/.*watch/https:\/\/www.youtube.com\//g'|sed 's/\\u0026amp.*//g' | grep -v '^$' >> "playlist_$1.txt"
+	else
+		tr -s '\\|/' '\n' < "${TMPFILE}.html" >  "${TMPFILE}"
+		grep "^watch" "${TMPFILE}" | sed 's/\\u0026amp;\(.*\)//g' | sed 's/watch/https:\/\/www.youtube.com\/watch/g' | sort -u >> "playlist_$1.txt"
+	fi
+done;
 
-	tr -s '\\|/' '\n' < ${TMPFILE}.html >  "${TMPFILE}"
-	grep "^watch" ${TMPFILE} | sed 's/\\u0026amp;\(.*\)//g' | sed 's/watch/https:\/\/www.youtube.com\/watch/g' | sort -u >> playlist_$1.txt
-done
-
-rm -f ${TMPFILE}*
+rm -f "${TMPFILE}*"
