@@ -36,7 +36,7 @@ eval "$COMMAND"
 
 if $withnames;
 then
-	grep -e "^<tr.*<a href=\"/watch?v=.*$1" "$TMPFILE" | sed 's/.*data-title=\"/\n/g' | sed 's/\"/\n/' | sed 's/.*watch/https:\/\/www.youtube.com\/watch/g' | sed 's/&amp.*//g' | grep -v '^$' > "playlist_$1.txt"
+	grep -e "^<tr.*<a href=\"/watch?v=.*$1" "$TMPFILE" | sed 's/.*data-title=\"/\'$'\n''/g' | sed 's/\"/\'$'\n''/' | sed 's/.*watch/https:\/\/www.youtube.com\/watch/g' | sed 's/&amp.*//g' | grep -v '^$' > "playlist_$1.txt"
 else
 	grep -e "^<tr.*<a href=\"/watch?v=.*$1" "$TMPFILE" | sed 's/.*watch/https:\/\/www.youtube.com\/watch/g' | sed 's/&amp.*//g' > "playlist_$1.txt"
 fi
