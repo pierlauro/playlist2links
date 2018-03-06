@@ -55,12 +55,12 @@ do
 	fi
 	if $withnames;
 	then
-		sed 's/\\n/\n/g' "$TMPFILE" | grep -e "data-title=" | sed 's/.*data-title=\\"/\n/g'| sed 's/\\"/\n/'| sed 's/.*watch/https:\/\/www.youtube.com\//g'| sed 's/\\u0026amp.*//g' | grep -v '^$' >> "playlist_$1.txt"
+		sed 's/\\n/\'$'\n''/g' "$TMPFILE" | grep -e "data-title=" | sed 's/.*data-title=\\"/\'$'\n''/g'| sed 's/\\"/\'$'\n''/'| sed 's/.*watch/https:\/\/www.youtube.com\//g'| sed 's/\\u0026amp.*//g' | grep -v '^$' >> "playlist_$1.txt"
 	else
 		tr -s '\\|/' '\n' < "$TMPFILE" | grep "^watch" | sed 's/\\u0026amp;\(.*\)//g' | sed 's/watch/https:\/\/www.youtube.com\/watch/g' | sort -u >> "playlist_$1.txt"
 	fi
 
-	CONTINUATION=$(sed 's/action_continuation=1\\u0026amp;/\n/g' $TMPFILE | tail -n1 | cut -d '\' -f1)
-done;
+	CONTINUATION=$(sed 's/action_continuation=1\\u0026amp;/\'$'\n''/g' $TMPFILE | tail -n1 | cut -d '\' -f1)
+done
 
 rm -f $TMPFILE
