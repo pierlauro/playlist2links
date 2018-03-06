@@ -41,24 +41,26 @@ else
 	grep -e "^<tr.*<a href=\"/watch?v=.*$1" "$TMPFILE" | sed 's/.*watch/https:\/\/www.youtube.com\/watch/g' | sed 's/&amp.*//g' > "playlist_$1.txt"
 fi
 
-while [ "$(grep "continuation=" $TMPFILE)" ]
+CONTINUATION=$(grep 'continuation=' $TMPFILE | head -n1 | cut -d ';' -f2-3 | cut -d '"' -f 1 | cut -d '\' -f1)
+
+while [[ "$CONTINUATION" =~ ^continuation.* ]]
 do
-	sed -i 's/_continuation=1/\n/g' $TMPFILE
-	CONTINUATION='https://www.youtube.com/browse_ajax?action_continuation=1&'$(grep 'continuation=' $TMPFILE | head -n1 | cut -d ';' -f2 | cut -d '"' -f 1 | cut -d '\' -f1)
+	URL='https://www.youtube.com/browse_ajax?action_continuation=1&'$CONTINUATION
 
 	if [[ -n $(type -p wget) ]];
 	then
-		wget -o /dev/null -O "$TMPFILE" "$CONTINUATION"
+		wget -o /dev/null -O "$TMPFILE" "$URL"
 	else
-		curl -s -o "$TMPFILE" "$CONTINUATION"
+		curl -s -o "$TMPFILE" "$URL"
 	fi
 	if $withnames;
 	then
 		sed 's/\\n/\n/g' "$TMPFILE" | grep -e "data-title=" | sed 's/.*data-title=\\"/\n/g'| sed 's/\\"/\n/'| sed 's/.*watch/https:\/\/www.youtube.com\//g'| sed 's/\\u0026amp.*//g' | grep -v '^$' >> "playlist_$1.txt"
 	else
-		tr -s '\\|/' '\n' < "$TMPFILE" >  "${TMPFILE}"
-		grep "^watch" "${TMPFILE}" | sed 's/\\u0026amp;\(.*\)//g' | sed 's/watch/https:\/\/www.youtube.com\/watch/g' | sort -u >> "playlist_$1.txt"
+		tr -s '\\|/' '\n' < "$TMPFILE" | grep "^watch" | sed 's/\\u0026amp;\(.*\)//g' | sed 's/watch/https:\/\/www.youtube.com\/watch/g' | sort -u >> "playlist_$1.txt"
 	fi
+
+	CONTINUATION=$(sed 's/action_continuation=1\\u0026amp;/\n/g' $TMPFILE | tail -n1 | cut -d '\' -f1)
 done;
 
 rm -f $TMPFILE
