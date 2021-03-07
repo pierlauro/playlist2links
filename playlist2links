@@ -6,6 +6,8 @@ then
 	exit 1
 fi
 URL="https://www.youtube.com/playlist?list=$1"
+YOUTUBE_VIDEO_URL_PREFIX="https:\/\/youtube.com\/watch?v="
+OUT_FILE="playlist_$1.txt"
 
 withnames=false
 if [[ "$2" = "withnames" ]];
@@ -36,9 +38,9 @@ eval "$COMMAND"
 
 if $withnames;
 then
-	grep -e "^<tr.*<a href=\"/watch?v=.*$1" "$TMPFILE" | sed 's/.*data-title=\"/\'$'\n''/g' | sed 's/\"/\'$'\n''/' | sed 's/.*watch/https:\/\/www.youtube.com\/watch/g' | sed 's/&amp.*//g' | grep -v '^$' > "playlist_$1.txt"
+	grep -o -P '"videoId":"[^"]+","thumb|\}\]\},"title":\{"runs":\[\{"text":"([^"]+)"' $TMPFILE | head -n -1 | sed 's/.*:\|,"thumb\|"//g' | sed 'N;s/^//g' | sed -rz 's/\n([^\n]*\n)/\t\1/g' | sed "s/^/$YOUTUBE_VIDEO_URL_PREFIX/g" > $OUT_FILE
 else
-	grep -e "^<tr.*<a href=\"/watch?v=.*$1" "$TMPFILE" | sed 's/.*watch/https:\/\/www.youtube.com\/watch/g' | sed 's/&amp.*//g' > "playlist_$1.txt"
+	grep -o -P '"videoId":"[^"]+","thumb' $TMPFILE | head -n -1 | sed 's/.*:\|,"thumb\|"//g' | sed "s/^/$YOUTUBE_VIDEO_URL_PREFIX/g" > $OUT_FILE
 fi
 
 CONTINUATION=$(grep 'continuation=' $TMPFILE | head -n1 | cut -d ';' -f2-3 | cut -d '"' -f 1 | cut -d '\' -f1)
